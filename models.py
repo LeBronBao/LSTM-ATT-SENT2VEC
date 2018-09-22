@@ -7,7 +7,7 @@ import os
 
 class BiLSTM(nn.Module):
 
-    def __init__(self, config):
+    def __init__(self, config):  # config作为参数传入，类型为字典
         super(BiLSTM, self).__init__()
         self.drop = nn.Dropout(config['dropout'])
         self.encoder = nn.Embedding(config['ntoken'], config['ninp'])
@@ -50,7 +50,7 @@ class BiLSTM(nn.Module):
             outp = torch.transpose(outp, 0, 1).contiguous()
         return outp, emb
 
-    def init_hidden(self, bsz):
+    def init_hidden(self, bsz):  # 初始化隐层
         weight = next(self.parameters()).data
         return (Variable(weight.new(self.nlayers * 2, bsz, self.nhid).zero_()),
                 Variable(weight.new(self.nlayers * 2, bsz, self.nhid).zero_()))

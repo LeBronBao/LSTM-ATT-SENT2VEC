@@ -3,7 +3,7 @@ import argparse
 
 
 class Dictionary(object):
-    def __init__(self, path=''):
+    def __init__(self, path=''):  # 分别初始化词语和其下标的映射字典，以及下标对词语的列表
         self.word2idx = dict()
         self.idx2word = list()
         if path != '':  # load an external dictionary
@@ -11,16 +11,19 @@ class Dictionary(object):
             for item in words:
                 self.add_word(item)
 
+    # 添加一个词语，若词语在字典中不存在，则加入列表，并以该词语为key，该词语在列表中的index为value加入字典
     def add_word(self, word):
         if word not in self.word2idx:
             self.idx2word.append(word)
             self.word2idx[word] = len(self.idx2word) - 1
         return self.word2idx[word]
 
+    # 返回字典中词语的个数
     def __len__(self):
         return len(self.idx2word)
 
 
+# 读取传入的参数
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--emsize', type=int, default=300,

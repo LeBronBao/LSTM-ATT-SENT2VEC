@@ -64,15 +64,18 @@ def evaluate():
 
 def train(epoch_number):
     global best_val_loss, best_acc
-    model.train()
+    model.train()  # 将模型设置为训练模式
     total_loss = 0
     total_pure_loss = 0  # without the penalization term
     start_time = time.time()
+    # 从0到训练数据的长度，并以batch_size进行分割
     for batch, i in enumerate(range(0, len(data_train), args.batch_size)):
+        # 每个循环打包batch_size个数据
         data, targets = package(data_train[i:i+args.batch_size], volatile=False)
         if args.cuda:
             data = data.cuda()
             targets = targets.cuda()
+
         hidden = model.init_hidden(data.size(1))
         output, attention = model.forward(data, hidden)
         loss = criterion(output.view(data.size(1), -1), targets)
@@ -135,6 +138,8 @@ if __name__ == '__main__':
 
     # Set the random seed manually for reproducibility.
     torch.manual_seed(args.seed)
+
+    # 判断是否可以启用gpu
     if torch.cuda.is_available():
         if not args.cuda:
             print("WARNING: You have a CUDA device, so you should probably run with --cuda")
@@ -142,16 +147,20 @@ if __name__ == '__main__':
             torch.cuda.manual_seed(args.seed)
     random.seed(args.seed)
 
-    # Load Dictionary
+    # 判断训练集和验证集路径是否存在
     assert os.path.exists(args.train_data)
     assert os.path.exists(args.val_data)
+    # 加载语料库中的字典
     print('Begin to load the dictionary.')
     dictionary = Dictionary(path=args.dictionary)
 
     best_val_loss = None
     best_acc = None
 
+    # 获取语料库中词语数量
     n_token = len(dictionary)
+
+    # 初始化分类器，使用输入的参数
     model = Classifier({
         'dropout': args.dropout,
         'ntoken': n_token,
@@ -170,13 +179,17 @@ if __name__ == '__main__':
         model = model.cuda()
 
     print(args)
+
+    # 生成batch个全为0的hop乘hop的矩阵
     I = Variable(torch.zeros(args.batch_size, args.attention_hops, args.attention_hops))
+    # 并将每个矩阵的每个元素都设为1
     for i in range(args.batch_size):
         for j in range(args.attention_hops):
             I.data[i][j][j] = 1
     if args.cuda:
         I = I.cuda()
 
+    # 定义交叉熵和优化器
     criterion = nn.CrossEntropyLoss()
     if args.optimizer == 'Adam':
         optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=[0.9, 0.999], eps=1e-8, weight_decay=0)
@@ -185,6 +198,8 @@ if __name__ == '__main__':
     else:
         raise Exception('For other optimizers, please add it yourself. '
                         'supported ones are: SGD and Adam.')
+
+    # 加载训练和验证数据
     print('Begin to load data.')
     data_train = open(args.train_data).readlines()
     data_val = open(args.val_data).readlines()
